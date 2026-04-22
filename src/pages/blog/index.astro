@@ -1,0 +1,44 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+
+const posts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const categories = Array.from(new Set(posts.map((p) => p.data.category)));
+const catLabel: Record<string, string> = {
+  plantio: 'Plantio',
+  cultivo: 'Cultivo',
+  consumo: 'Consumo',
+  cultura: 'Cultura',
+  ciencia: 'Ciência',
+};
+---
+
+<BaseLayout title="Blog" description="Artigos sobre plantio, cultivo e consumo consciente de cannabis.">
+  <section class="container-page py-16">
+    <header class="mb-10">
+      <span class="chip chip-leaf mb-4">Blog</span>
+      <h1 class="font-[var(--font-display)] text-4xl md:text-5xl font-bold text-white">
+        Dicas, técnicas e ciência
+      </h1>
+      <p class="text-ink-300 mt-3 max-w-2xl">
+        Conteúdo sobre plantio, cultivo indoor/outdoor, formas de consumo e o lado
+        botânico da planta.
+      </p>
+    </header>
+
+    <div class="mb-8 flex flex-wrap gap-2">
+      <a href="#" class="chip chip-leaf">Todos</a>
+      {categories.map((c) => (
+        <a href={`#cat-${c}`} class="chip">{catLabel[c] ?? c}</a>
+      ))}
+    </div>
+
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {posts.map((p) => <PostCard post={p} />)}
+    </div>
+  </section>
+</BaseLayout>

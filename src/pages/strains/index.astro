@@ -1,0 +1,75 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import StrainCard from '../../components/StrainCard.astro';
+
+const strains = (await getCollection('strains')).sort((a, b) => a.data.name.localeCompare(b.data.name));
+
+const byType = {
+  indica: strains.filter((s) => s.data.type === 'indica').length,
+  sativa: strains.filter((s) => s.data.type === 'sativa').length,
+  hibrida: strains.filter((s) => s.data.type === 'hibrida').length,
+};
+---
+
+<BaseLayout title="Strains" description="Catálogo biológico de strains de cannabis: genética, canabinoides, terpenos e cultivo.">
+  <section class="container-page py-16">
+    <header class="mb-10">
+      <span class="chip chip-haze mb-4">Catálogo biológico</span>
+      <h1 class="font-[var(--font-display)] text-4xl md:text-5xl font-bold text-white">
+        Enciclopédia de strains
+      </h1>
+      <p class="text-ink-300 mt-3 max-w-2xl">
+        Ficha técnica de cada variedade: genética, canabinoides, terpenos, efeitos,
+        aromas e parâmetros de cultivo.
+      </p>
+    </header>
+
+    <div class="grid grid-cols-3 gap-3 mb-10 max-w-xl">
+      <div class="card p-4">
+        <div class="text-xs text-ink-400">Sativas</div>
+        <div class="text-2xl font-semibold text-white">{byType.sativa}</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-xs text-ink-400">Índicas</div>
+        <div class="text-2xl font-semibold text-white">{byType.indica}</div>
+      </div>
+      <div class="card p-4">
+        <div class="text-xs text-ink-400">Híbridas</div>
+        <div class="text-2xl font-semibold text-white">{byType.hibrida}</div>
+      </div>
+    </div>
+
+    <div class="mb-8 flex flex-wrap gap-2" id="filters">
+      <button data-filter="all" class="chip chip-leaf">Todas</button>
+      <button data-filter="sativa" class="chip chip-amber">Sativa</button>
+      <button data-filter="indica" class="chip chip-haze">Indica</button>
+      <button data-filter="hibrida" class="chip">Híbrida</button>
+    </div>
+
+    <div id="strain-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {strains.map((s) => (
+        <div data-type={s.data.type}>
+          <StrainCard strain={s} />
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <script is:inline>
+    document.querySelectorAll('#filters button').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const f = btn.getAttribute('data-filter');
+        document.querySelectorAll('#filters button').forEach((b) => {
+          b.classList.remove('chip-leaf');
+          b.classList.add('chip');
+        });
+        btn.classList.add('chip-leaf');
+        document.querySelectorAll('#strain-grid [data-type]').forEach((el) => {
+          const show = f === 'all' || el.getAttribute('data-type') === f;
+          el.style.display = show ? '' : 'none';
+        });
+      });
+    });
+  </script>
+</BaseLayout>

@@ -1,0 +1,47 @@
+---
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { title, description, pubDate, category, tags, readingTime } = post.data;
+
+const catLabel: Record<string, string> = {
+  plantio: 'Plantio',
+  cultivo: 'Cultivo',
+  consumo: 'Consumo',
+  cultura: 'Cultura',
+  ciencia: 'Ciência',
+};
+
+const date = pubDate.toLocaleDateString('pt-BR', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+});
+---
+
+<a href={`/blog/${post.id}`} class="card p-6 block group">
+  <div class="flex items-center gap-2 text-xs text-ink-400 mb-3">
+    <span class="chip chip-leaf">{catLabel[category] ?? category}</span>
+    <span>·</span>
+    <time datetime={pubDate.toISOString()}>{date}</time>
+    {readingTime && (
+      <>
+        <span>·</span>
+        <span>{readingTime} min</span>
+      </>
+    )}
+  </div>
+  <h3 class="font-[var(--font-display)] text-xl font-semibold text-white group-hover:text-leaf-300 transition-colors">
+    {title}
+  </h3>
+  <p class="text-ink-300 text-sm mt-2 line-clamp-3">{description}</p>
+  {tags.length > 0 && (
+    <div class="mt-4 flex flex-wrap gap-1.5">
+      {tags.slice(0, 3).map((t) => <span class="chip">#{t}</span>)}
+    </div>
+  )}
+</a>

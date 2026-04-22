@@ -1,0 +1,145 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+
+export async function getStaticPaths() {
+  const strains = await getCollection('strains');
+  return strains.map((strain) => ({
+    params: { slug: strain.id },
+    props: { strain },
+  }));
+}
+
+const { strain } = Astro.props;
+const { Content } = await render(strain);
+const {
+  name,
+  alias,
+  type,
+  dominance,
+  genetics,
+  cannabinoids,
+  terpenes,
+  effects,
+  flavors,
+  aroma,
+  medicinal,
+  cultivation,
+} = strain.data;
+
+const typeLabel: Record<string, string> = {
+  indica: 'Indica',
+  sativa: 'Sativa',
+  hibrida: 'Híbrida',
+};
+const typeChipClass: Record<string, string> = {
+  indica: 'chip-haze',
+  sativa: 'chip-amber',
+  hibrida: 'chip-leaf',
+};
+---
+
+<BaseLayout title={name} description={`Ficha biológica completa da strain ${name}: genética, canabinoides, terpenos e cultivo.`}>
+  <article class="container-page py-16">
+    <a href="/strains" class="text-sm text-leaf-300 hover:text-leaf-200">← Voltar ao catálogo</a>
+
+    <header class="mt-6 mb-10 grid md:grid-cols-[1fr_auto] gap-6 items-start">
+      <div>
+        <span class={`chip ${typeChipClass[type]} mb-3`}>{typeLabel[type]}</span>
+        <h1 class="font-[var(--font-display)] text-4xl md:text-5xl font-bold text-white">{name}</h1>
+        {alias.length > 0 && (
+          <p class="text-ink-400 mt-2 text-sm">Também conhecida como {alias.join(', ')}</p>
+        )}
+        {dominance && <p class="text-ink-300 mt-2">{dominance}</p>}
+      </div>
+    </header>
+
+    <div class="grid lg:grid-cols-3 gap-6 mb-12">
+      <div class="card p-6">
+        <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-4">Canabinoides</h2>
+        <dl class="space-y-3">
+          <div class="flex justify-between">
+            <dt class="text-ink-300">THC</dt>
+            <dd class="text-white font-semibold">{cannabinoids.thc ?? '—'}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-ink-300">CBD</dt>
+            <dd class="text-white font-semibold">{cannabinoids.cbd ?? '—'}</dd>
+          </div>
+          {cannabinoids.cbg && (
+            <div class="flex justify-between">
+              <dt class="text-ink-300">CBG</dt>
+              <dd class="text-white font-semibold">{cannabinoids.cbg}</dd>
+            </div>
+          )}
+        </dl>
+      </div>
+
+      <div class="card p-6">
+        <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-4">Genética</h2>
+        {genetics.parents.length > 0 && (
+          <p class="text-ink-200 mb-2"><span class="text-ink-400 text-sm">Parentais: </span>{genetics.parents.join(' × ')}</p>
+        )}
+        {genetics.origin && <p class="text-ink-200 mb-2"><span class="text-ink-400 text-sm">Origem: </span>{genetics.origin}</p>}
+        {genetics.breeder && <p class="text-ink-200"><span class="text-ink-400 text-sm">Breeder: </span>{genetics.breeder}</p>}
+      </div>
+
+      <div class="card p-6">
+        <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-4">Cultivo</h2>
+        <dl class="space-y-2 text-sm">
+          <div class="flex justify-between"><dt class="text-ink-300">Dificuldade</dt><dd class="text-white capitalize">{cultivation.difficulty}</dd></div>
+          {cultivation.flowering && <div class="flex justify-between"><dt class="text-ink-300">Floração</dt><dd class="text-white">{cultivation.flowering}</dd></div>}
+          {cultivation.yield && <div class="flex justify-between"><dt class="text-ink-300">Produção</dt><dd class="text-white">{cultivation.yield}</dd></div>}
+          {cultivation.height && <div class="flex justify-between"><dt class="text-ink-300">Altura</dt><dd class="text-white">{cultivation.height}</dd></div>}
+          {cultivation.climate && <div class="flex justify-between"><dt class="text-ink-300">Clima</dt><dd class="text-white">{cultivation.climate}</dd></div>}
+          <div class="flex justify-between"><dt class="text-ink-300">Indoor / Outdoor</dt>
+            <dd class="text-white">
+              {cultivation.indoor ? 'Indoor' : ''}{cultivation.indoor && cultivation.outdoor ? ' · ' : ''}{cultivation.outdoor ? 'Outdoor' : ''}
+            </dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6 mb-12">
+      {effects.length > 0 && (
+        <section>
+          <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-3">Efeitos</h2>
+          <div class="flex flex-wrap gap-2">
+            {effects.map((e) => <span class="chip chip-leaf">{e}</span>)}
+          </div>
+        </section>
+      )}
+      {medicinal.length > 0 && (
+        <section>
+          <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-3">Uso medicinal relatado</h2>
+          <div class="flex flex-wrap gap-2">
+            {medicinal.map((m) => <span class="chip chip-haze">{m}</span>)}
+          </div>
+          <p class="text-xs text-ink-400 mt-3">Informação educacional. Não substitui acompanhamento médico.</p>
+        </section>
+      )}
+      {terpenes.length > 0 && (
+        <section>
+          <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-3">Terpenos dominantes</h2>
+          <div class="flex flex-wrap gap-2">
+            {terpenes.map((t) => <span class="chip">{t}</span>)}
+          </div>
+        </section>
+      )}
+      {(flavors.length > 0 || aroma.length > 0) && (
+        <section>
+          <h2 class="text-sm uppercase tracking-wider text-ink-400 mb-3">Aroma & Sabor</h2>
+          <div class="flex flex-wrap gap-2">
+            {aroma.map((a) => <span class="chip chip-amber">aroma: {a}</span>)}
+            {flavors.map((f) => <span class="chip">sabor: {f}</span>)}
+          </div>
+        </section>
+      )}
+    </div>
+
+    <div class="prose-ervario">
+      <Content />
+    </div>
+  </article>
+</BaseLayout>

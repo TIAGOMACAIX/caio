@@ -1,0 +1,102 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import StrainCard from '../components/StrainCard.astro';
+
+const posts = (await getCollection('blog'))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
+
+const strains = (await getCollection('strains'))
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured))
+  .slice(0, 4);
+---
+
+<BaseLayout title="Ervário">
+  <section class="relative">
+    <div class="container-page pt-20 pb-16 md:pt-28 md:pb-24">
+      <div class="max-w-3xl">
+        <span class="chip chip-leaf mb-6">
+          <span class="h-1.5 w-1.5 rounded-full bg-leaf-400 animate-pulse"></span>
+          Plataforma educacional · 18+
+        </span>
+        <h1 class="font-[var(--font-display)] text-4xl md:text-6xl font-bold tracking-tight text-white leading-[1.05]">
+          Tudo sobre <span class="text-leaf-400">cannabis</span>,<br />
+          do broto ao <span class="text-haze-400">terpeno</span>.
+        </h1>
+        <p class="mt-6 text-lg text-ink-200 max-w-2xl">
+          Dicas de plantio, técnicas de cultivo, formas de consumo consciente e
+          uma enciclopédia biológica de strains — AK-47, Purple Haze, Blue Dream e
+          muito mais.
+        </p>
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="/blog" class="btn btn-primary">
+            Ler o blog
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a href="/strains" class="btn btn-ghost">
+            Explorar strains
+          </a>
+        </div>
+      </div>
+
+      <div class="mt-16 grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { k: 'Strains catalogadas', v: strains.length + '+' },
+          { k: 'Artigos publicados', v: posts.length + '+' },
+          { k: 'Categorias', v: '5' },
+          { k: 'Atualizado', v: 'Semanalmente' },
+        ].map((i) => (
+          <div class="card p-4">
+            <div class="text-xs text-ink-400">{i.k}</div>
+            <div class="mt-1 text-xl font-semibold text-white">{i.v}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="container-page py-14">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="font-[var(--font-display)] text-3xl font-semibold text-white">Últimos artigos</h2>
+        <p class="text-ink-300 mt-1">Plantio, cultivo, consumo e ciência.</p>
+      </div>
+      <a href="/blog" class="text-sm text-leaf-300 hover:text-leaf-200">Ver todos →</a>
+    </div>
+    <div class="grid md:grid-cols-3 gap-5">
+      {posts.map((p) => <PostCard post={p} />)}
+    </div>
+  </section>
+
+  <section class="container-page py-14">
+    <div class="flex items-end justify-between mb-8">
+      <div>
+        <h2 class="font-[var(--font-display)] text-3xl font-semibold text-white">Strains em destaque</h2>
+        <p class="text-ink-300 mt-1">Fichas biológicas com genética, canabinoides e perfil de cultivo.</p>
+      </div>
+      <a href="/strains" class="text-sm text-leaf-300 hover:text-leaf-200">Ver catálogo →</a>
+    </div>
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {strains.map((s) => <StrainCard strain={s} />)}
+    </div>
+  </section>
+
+  <section class="container-page py-16">
+    <div class="card p-8 md:p-12 bg-gradient-to-br from-leaf-900/40 to-haze-900/30 border-leaf-700/30">
+      <h2 class="font-[var(--font-display)] text-2xl md:text-3xl font-semibold text-white">
+        Cultivo responsável começa com informação
+      </h2>
+      <p class="text-ink-200 mt-3 max-w-2xl">
+        Nosso conteúdo é educacional. Conheça a legislação da sua região, respeite
+        limites de consumo e, em casos medicinais, sempre procure orientação
+        profissional.
+      </p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a href="/aviso-legal" class="btn btn-ghost">Ler o aviso legal</a>
+        <a href="/sobre" class="btn btn-ghost">Sobre o Ervário</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

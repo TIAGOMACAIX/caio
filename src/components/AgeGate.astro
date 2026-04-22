@@ -1,0 +1,41 @@
+---
+---
+<div id="age-gate" class="fixed inset-0 z-50 hidden items-center justify-center bg-ink-950/90 backdrop-blur-md p-6">
+  <div class="card max-w-md w-full p-8 text-center">
+    <div class="mx-auto mb-4 h-12 w-12 rounded-full bg-leaf-500/20 grid place-items-center text-leaf-300 font-semibold text-xl">
+      18+
+    </div>
+    <h2 class="text-2xl font-semibold text-white mb-2">Conteúdo para maiores</h2>
+    <p class="text-ink-300 mb-6 text-sm">
+      O Ervário traz informações educacionais sobre cannabis. Para acessar,
+      confirme que você tem 18 anos ou mais e que respeitará a legislação
+      aplicável à sua região.
+    </p>
+    <div class="flex gap-3 justify-center">
+      <button id="age-accept" class="btn btn-primary">Sou maior de 18</button>
+      <a href="https://www.google.com" class="btn btn-ghost">Sair</a>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+  (function () {
+    const KEY = 'ervario:age-ok';
+    const el = document.getElementById('age-gate');
+    if (!el) return;
+    try {
+      if (!localStorage.getItem(KEY)) {
+        el.classList.remove('hidden');
+        el.classList.add('flex');
+        document.documentElement.style.overflow = 'hidden';
+      }
+    } catch (_) {}
+    const btn = document.getElementById('age-accept');
+    btn?.addEventListener('click', () => {
+      try { localStorage.setItem(KEY, '1'); } catch (_) {}
+      el.classList.add('hidden');
+      el.classList.remove('flex');
+      document.documentElement.style.overflow = '';
+    });
+  })();
+</script>
