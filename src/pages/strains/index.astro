@@ -10,6 +10,29 @@ const byType = {
   sativa: strains.filter((s) => s.data.type === 'sativa').length,
   hibrida: strains.filter((s) => s.data.type === 'hibrida').length,
 };
+
+const normalize = (s: string) =>
+  s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+const buildSearchIndex = (d: (typeof strains)[number]['data']) =>
+  normalize(
+    [
+      d.name,
+      ...d.alias,
+      d.type,
+      d.dominance ?? '',
+      ...d.genetics.parents,
+      d.genetics.origin ?? '',
+      d.genetics.breeder ?? '',
+      ...d.terpenes,
+      ...d.effects,
+      ...d.flavors,
+      ...d.aroma,
+      ...d.medicinal,
+    ]
+      .filter(Boolean)
+      .join(' ')
+  );
 ---
 
 <BaseLayout title="Strains" description="Catálogo biológico de strains de cannabis: genética, canabinoides, terpenos e cultivo.">
@@ -40,36 +63,168 @@ const byType = {
       </div>
     </div>
 
+    <div class="mb-6">
+      <label for="strain-search" class="sr-only">Buscar strain</label>
+      <div class="relative max-w-xl">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-ink-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+        </svg>
+        <input
+          id="strain-search"
+          type="search"
+          placeholder="Buscar por nome, efeito, terpeno, aroma…"
+          autocomplete="off"
+          class="w-full rounded-xl border border-white/10 bg-white/5 py-3 pl-11 pr-10 text-sm text-white placeholder:text-ink-400 focus:outline-none focus:border-leaf-500/60 focus:bg-white/[0.07] transition-colors"
+        />
+        <button
+          id="strain-search-clear"
+          type="button"
+          aria-label="Limpar busca"
+          class="absolute right-2 top-1/2 -translate-y-1/2 hidden h-7 w-7 items-center justify-center rounded-lg text-ink-300 hover:bg-white/10 hover:text-white"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 6l12 12M18 6 6 18" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <p id="strain-search-count" class="mt-2 text-xs text-ink-400">
+        {strains.length} variedades no catálogo
+      </p>
+    </div>
+
     <div class="mb-8 flex flex-wrap gap-2" id="filters">
       <button data-filter="all" class="chip chip-leaf">Todas</button>
-      <button data-filter="sativa" class="chip chip-amber">Sativa</button>
-      <button data-filter="indica" class="chip chip-haze">Indica</button>
+      <button data-filter="sativa" class="chip">Sativa</button>
+      <button data-filter="indica" class="chip">Indica</button>
       <button data-filter="hibrida" class="chip">Híbrida</button>
     </div>
 
     <div id="strain-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {strains.map((s) => (
-        <div data-type={s.data.type}>
+        <div data-type={s.data.type} data-search={buildSearchIndex(s.data)} data-name={s.data.name}>
           <StrainCard strain={s} />
         </div>
       ))}
     </div>
+
+    <div id="strain-empty" class="hidden mt-10 card p-10 text-center">
+      <div class="mx-auto mb-3 h-12 w-12 rounded-full bg-white/5 grid place-items-center text-ink-300">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" stroke-linecap="round" />
+        </svg>
+      </div>
+      <p class="text-white font-medium">Nenhuma strain encontrada</p>
+      <p class="text-ink-400 text-sm mt-1">Tente outro termo ou limpe o filtro de tipo.</p>
+    </div>
   </section>
 
   <script is:inline>
-    document.querySelectorAll('#filters button').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const f = btn.getAttribute('data-filter');
-        document.querySelectorAll('#filters button').forEach((b) => {
-          b.classList.remove('chip-leaf');
-          b.classList.add('chip');
-        });
-        btn.classList.add('chip-leaf');
-        document.querySelectorAll('#strain-grid [data-type]').forEach((el) => {
-          const show = f === 'all' || el.getAttribute('data-type') === f;
+    (function () {
+      const total = document.querySelectorAll('#strain-grid [data-type]').length;
+      const filterBtns = document.querySelectorAll('#filters button');
+      const grid = document.getElementById('strain-grid');
+      const items = Array.from(grid?.children ?? []);
+      const empty = document.getElementById('strain-empty');
+      const countEl = document.getElementById('strain-search-count');
+      const input = document.getElementById('strain-search');
+      const clearBtn = document.getElementById('strain-search-clear');
+
+      let currentType = 'all';
+      let currentQuery = '';
+
+      const normalize = (s) =>
+        (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+      function apply() {
+        const q = normalize(currentQuery);
+        const terms = q.split(/\s+/).filter(Boolean);
+        let visible = 0;
+        items.forEach((el) => {
+          const typeOk = currentType === 'all' || el.getAttribute('data-type') === currentType;
+          const hay = el.getAttribute('data-search') || '';
+          const matchOk = terms.length === 0 || terms.every((t) => hay.includes(t));
+          const show = typeOk && matchOk;
           el.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+
+        if (empty) empty.classList.toggle('hidden', visible > 0);
+
+        if (countEl) {
+          if (q.length === 0 && currentType === 'all') {
+            countEl.textContent = `${total} variedades no catálogo`;
+          } else {
+            countEl.textContent = `${visible} de ${total} ${visible === 1 ? 'variedade' : 'variedades'}`;
+          }
+        }
+
+        if (clearBtn) {
+          clearBtn.classList.toggle('hidden', q.length === 0);
+          clearBtn.classList.toggle('flex', q.length > 0);
+        }
+      }
+
+      filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          currentType = btn.getAttribute('data-filter') || 'all';
+          filterBtns.forEach((b) => {
+            b.classList.remove('chip-leaf');
+            b.classList.add('chip');
+          });
+          btn.classList.remove('chip');
+          btn.classList.add('chip-leaf');
+          apply();
         });
       });
-    });
+
+      input?.addEventListener('input', (e) => {
+        currentQuery = e.target.value;
+        apply();
+      });
+
+      input?.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          input.value = '';
+          currentQuery = '';
+          apply();
+          input.blur();
+        }
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        if (!input) return;
+        input.value = '';
+        currentQuery = '';
+        apply();
+        input.focus();
+      });
+
+      // "/" atalho para focar busca
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement?.tagName !== 'INPUT') {
+          e.preventDefault();
+          input?.focus();
+        }
+      });
+
+      // Lê ?q= da URL
+      const params = new URLSearchParams(location.search);
+      const q0 = params.get('q');
+      if (q0 && input) {
+        input.value = q0;
+        currentQuery = q0;
+        apply();
+      }
+    })();
   </script>
 </BaseLayout>
