@@ -60,6 +60,22 @@ readingTime: 5
 Crie um arquivo em `src/content/strains/minha-strain.mdx` seguindo o schema
 em `src/content.config.ts`.
 
+### Adicionar foto real a uma strain
+
+Cada strain exibe por padrão uma **ilustração gerada em SVG** (gradiente +
+inicial + folha) baseada no tipo e na cor. Para substituir por uma foto
+real:
+
+1. Coloque a foto em `public/strains/` (ex.: `public/strains/ak-47.jpg`).
+   Recomendado: proporção 20:11, pelo menos 800px de largura, JPEG/WebP.
+2. No front-matter da strain, adicione:
+
+   ```yaml
+   image: "/strains/ak-47.jpg"
+   ```
+
+3. Salve e recarregue — a foto substitui o placeholder automaticamente.
+
 ## Aviso
 
 Projeto educacional, destinado a maiores de 18 anos. Leia o `aviso-legal` no

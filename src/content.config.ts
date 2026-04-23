@@ -49,6 +49,7 @@ const strains = defineCollection({
       outdoor: z.boolean().default(true),
     }),
     color: z.string().default('leaf'),
+    image: z.string().optional(),
     featured: z.boolean().default(false),
   }),
 });
