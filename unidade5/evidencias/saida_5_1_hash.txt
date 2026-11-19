@@ -1,0 +1,34 @@
+### Pratica 5.1 - Integridade por SHA-256
+### Inicio: 19/11/2026 14:38:28 UTC | 11:38:28 BRT
+### Sistema: Linux | sha256sum (GNU coreutils) 9.4
+
+lab$ printf '%s\n' 'Relato simulado' > evidencia.txt
+lab$ sha256sum evidencia.txt
+969ff386f5e35857cddf842e11ed923311f24f0da48ef8ed9ca6f362e7f0627e  evidencia.txt
+lab$ cp evidencia.txt evidencia_copia.txt
+lab$ sha256sum evidencia_copia.txt   # antes de editar
+969ff386f5e35857cddf842e11ed923311f24f0da48ef8ed9ca6f362e7f0627e  evidencia_copia.txt
+lab$ sed -i 's/simulado/alterado/' evidencia_copia.txt   # altera UMA palavra apenas na copia
+lab$ cat evidencia.txt evidencia_copia.txt
+Relato simulado
+Relato alterado
+lab$ sha256sum evidencia.txt evidencia_copia.txt
+969ff386f5e35857cddf842e11ed923311f24f0da48ef8ed9ca6f362e7f0627e  evidencia.txt
+e61232e40965e9eb4c2fb7dc7c44f0ecd71de936f4c23c83aaaa8dae044083cd  evidencia_copia.txt
+lab$ wc -c evidencia.txt evidencia_copia.txt
+16 evidencia.txt
+16 evidencia_copia.txt
+32 total
+
+### Controle: o que muda com 1 caractere (maiuscula) - teste extra
+lab$ printf '%s\n' 'Relato Simulado' | sha256sum
+0d61743ac4d947629a02cf20f7ca8255050ef6ab8c2f8706d3c3dc7dabfa3dd4  -
+
+### Controle: SHA-256 de entrada vazia (0 bytes)
+lab$ printf '' | sha256sum
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  -
+
+### Controle: bytes que o PowerShell gravaria (texto + CRLF) - calculo, NAO executado no Windows
+lab$ printf 'Relato simulado\r\n' | sha256sum
+9a74ffa36467fc06fe328771ad783f490f78b0cd19a966a91f8b977a968cd375  -
+### Fim: 19/11/2026 14:38:29 UTC

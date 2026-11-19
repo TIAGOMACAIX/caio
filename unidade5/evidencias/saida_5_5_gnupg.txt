@@ -1,0 +1,74 @@
+### Pratica opcional - GnuPG (arquivo ficticio, chaveiro isolado e temporario)
+### Inicio: 19/11/2026 14:43:53 UTC | 11:43:53 BRT
+lab$ gpg --version | head -1
+gpg (GnuPG) 2.4.4
+# Senha gerada aleatoriamente em arquivo temporario (.pass): nao exibida, nao registrada e destruida ao final.
+# Abaixo, OPCOES = --batch --pinentry-mode loopback --passphrase-file .pass
+lab$ printf "%s\n" "Relato ficticio para teste de criptografia" > relato_teste.txt
+
+# A) SIMETRICA: a mesma senha cifra e decifra
+lab$ gpg OPCOES --symmetric --cipher-algo AES256 -o relato_teste.txt.gpg relato_teste.txt
+gpg: keybox '[CAMINHO-OCULTADO]' created
+lab$ file relato_teste.txt.gpg
+relato_teste.txt.gpg: PGP symmetric key encrypted data - AES with 256-bit key salted & iterated - SHA512 .
+lab$ gpg OPCOES -o relato_decifrado.txt -d relato_teste.txt.gpg
+gpg: AES256.CFB encrypted data
+gpg: encrypted with 1 passphrase
+lab$ sha256sum relato_teste.txt relato_decifrado.txt
+a48fb0f36a70889181c6297c4d786814e48c88b455d7b93c9dd69d4ebc131e71  relato_teste.txt
+a48fb0f36a70889181c6297c4d786814e48c88b455d7b93c9dd69d4ebc131e71  relato_decifrado.txt
+lab$ gpgconf --reload gpg-agent   # limpa a senha em cache antes do teste negativo
+lab$ gpg --batch --pinentry-mode loopback --passphrase senha-errada -d relato_teste.txt.gpg   # senha incorreta
+gpg: encrypted with 1 passphrase
+gpg: decryption failed: Bad session key
+
+# B) ASSIMETRICA: par de chaves de teste (identidade ficticia, validade de 1 dia)
+lab$ gpg OPCOES --quick-gen-key "Laboratorio Campus Seguro (chave de teste) <lab@example.invalid>" ed25519 sign,cert 1d
+gpg: [CAMINHO-OCULTADO] trustdb created
+gpg: directory '[CAMINHO-OCULTADO]' created
+gpg: revocation certificate stored as '[CAMINHO-OCULTADO]'
+gpg: checking the trustdb
+gpg: marginals needed: 3  completes needed: 1  trust model: pgp
+gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
+gpg: next trustdb check due at 2026-11-20
+lab$ gpg OPCOES --quick-add-key <FPR> cv25519 encr 1d
+lab$ gpg --list-keys
+pub   ed25519 2026-11-19 [SC] [expires: 2026-11-20]
+      [ID-OCULTADO]
+uid           [ultimate] Laboratorio Campus Seguro (chave de teste) <lab@example.invalid>
+sub   cv25519 2026-11-19 [E] [expires: 2026-11-20]
+
+lab$ ls $GNUPGHOME/openpgp-revocs.d | wc -l   # certificado de revogacao gerado automaticamente
+1
+
+# B1) cifrar com a chave PUBLICA e decifrar com a PRIVADA
+lab$ gpg --batch --trust-model always --auto-key-locate local -e -r <FPR> -o relato_para_chave.gpg relato_teste.txt
+lab$ gpg OPCOES -o relato_dec2.txt -d relato_para_chave.gpg
+gpg: encrypted with cv25519 key, ID [ID-OCULTADO], created 2026-11-19
+      "Laboratorio Campus Seguro (chave de teste) <lab@example.invalid>"
+lab$ sha256sum relato_teste.txt relato_dec2.txt
+a48fb0f36a70889181c6297c4d786814e48c88b455d7b93c9dd69d4ebc131e71  relato_teste.txt
+a48fb0f36a70889181c6297c4d786814e48c88b455d7b93c9dd69d4ebc131e71  relato_dec2.txt
+
+# B2) assinatura digital destacada e verificacao
+lab$ gpg OPCOES --armor --detach-sign -o relato_teste.txt.asc relato_teste.txt
+lab$ gpg --verify relato_teste.txt.asc relato_teste.txt
+gpg: Signature made Thu Nov 19 14:43:57 2026 UTC
+gpg:                using EDDSA key [ID-OCULTADO]
+gpg: Good signature from "Laboratorio Campus Seguro (chave de teste) <lab@example.invalid>" [ultimate]
+lab$ cp relato_teste.txt relato_adulterado.txt && sed -i s/teste/TESTE/ relato_adulterado.txt
+lab$ gpg --verify relato_teste.txt.asc relato_adulterado.txt   # documento alterado depois da assinatura
+gpg: Signature made Thu Nov 19 14:43:57 2026 UTC
+gpg:                using EDDSA key [ID-OCULTADO]
+gpg: BAD signature from "Laboratorio Campus Seguro (chave de teste) <lab@example.invalid>" [ultimate]
+
+# C) DESCARTE: remove as chaves de teste, os arquivos e a senha temporaria
+lab$ gpg --batch --yes --delete-secret-and-public-key <FPR>
+lab$ gpg --list-keys | wc -l
+0
+lab$ shred -u .pass relato_teste.txt relato_decifrado.txt relato_dec2.txt relato_adulterado.txt relato_teste.txt.gpg relato_para_chave.gpg relato_teste.txt.asc && gpgconf --kill gpg-agent
+lab$ ls -A | wc -l
+0
+# executado logo apos o roteiro:
+lab$ gpgconf --kill gpg-agent && rm -r <diretorio-do-chaveiro-temporario>   # remove tambem o certificado de revogacao da chave de TESTE
+### Fim: 19/11/2026 14:43:57 UTC

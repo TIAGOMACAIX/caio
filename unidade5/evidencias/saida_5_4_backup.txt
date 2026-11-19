@@ -1,0 +1,49 @@
+### Pratica 5.4 - Verificacao de backup e restauracao
+### Inicio: 19/11/2026 14:40:26 UTC | 11:40:26 BRT
+
+lab$ mkdir laboratorio backup_lab
+lab$ printf '%s\n' 'Ata ficticia da reuniao 01' > laboratorio/ata_ficticia.txt
+lab$ printf '%s\n' 'Lista ficticia: item A; item B' > laboratorio/lista_ficticia.txt
+lab$ printf '%s\n' 'Relatorio ficticio de testes' > laboratorio/relatorio_ficticio.txt
+
+# 1) hashes na ORIGEM (antes da copia)
+lab$ (cd laboratorio && sha256sum *.txt) | tee hashes_origem.sha256
+82b0ae68252e00db325c3fa7516b34bee3e1e48e759cb044627455585deed0a8  ata_ficticia.txt
+452719fb37f5f6ef1e02b214af0fa36669de6fb3bcc23cabf9220081bfc19001  lista_ficticia.txt
+c728f1dc1d2c627d9f4ee2d499eb0f7a7857cb6399f734d71eea54f436756234  relatorio_ficticio.txt
+lab$ ls laboratorio | wc -l
+3
+
+# 2) copia para o segundo local autorizado
+lab$ cp -p laboratorio/*.txt backup_lab/
+lab$ ls backup_lab | wc -l
+3
+
+# 3) hashes no BACKUP (depois da copia) conferidos contra a lista da origem
+lab$ (cd backup_lab && sha256sum -c ../hashes_origem.sha256)
+ata_ficticia.txt: OK
+lista_ficticia.txt: OK
+relatorio_ficticio.txt: OK
+
+# 4) simula perda: apaga UM arquivo apenas da pasta de trabalho
+lab$ rm laboratorio/lista_ficticia.txt && ls laboratorio
+ata_ficticia.txt
+relatorio_ficticio.txt
+lab$ (cd laboratorio && sha256sum -c ../hashes_origem.sha256)   # deve acusar o arquivo ausente
+ata_ficticia.txt: OK
+sha256sum: lista_ficticia.txt: No such file or directory
+lista_ficticia.txt: FAILED open or read
+relatorio_ficticio.txt: OK
+sha256sum: WARNING: 1 listed file could not be read
+
+# 5) restauracao a partir do backup
+lab$ cp -p backup_lab/lista_ficticia.txt laboratorio/
+lab$ (cd laboratorio && sha256sum -c ../hashes_origem.sha256)
+ata_ficticia.txt: OK
+lista_ficticia.txt: OK
+relatorio_ficticio.txt: OK
+lab$ cat laboratorio/lista_ficticia.txt   # arquivo restaurado abre e esta legivel
+Lista ficticia: item A; item B
+lab$ ls laboratorio | wc -l
+3
+### Fim: 19/11/2026 14:40:26 UTC | 11:40:26 BRT

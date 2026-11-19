@@ -1,0 +1,47 @@
+### Pratica 5.3 - HTTPS e certificado (dominio autorizado: example.com)
+### Inicio: 19/11/2026 14:39:16 UTC | 11:39:16 BRT
+### curl 8.5.0 | OpenSSL 3.0.13 30 Jan 2024 (Library: OpenSSL 3.0.13 30 Jan 2024)
+
+lab$ getent hosts example.com   # resolucao DNS
+[IP-OCULTADO]  example.com
+[IP-OCULTADO]   example.com
+
+lab$ timeout 10 bash -c 'echo > /dev/tcp/example.com/443' && echo 'porta 443 alcancavel'   # equivalente a Test-NetConnection -Port 443
+porta 443 alcancavel
+
+lab$ curl -I https://example.com
+HTTP/1.1 200 Connection Established
+
+HTTP/2 200 
+date: Thu, 19 Nov 2026 14:39:17 GMT
+content-type: text/html; charset=utf-8
+server: cloudflare
+last-modified: Wed, 18 Nov 2026 10:54:07 GMT
+allow: GET, HEAD
+accept-ranges: bytes
+age: 0
+cf-cache-status: HIT
+cf-ray: [OCULTADO]
+alt-svc: h3=":443"; ma=86400
+
+lab$ openssl s_client -connect example.com:443 -servername example.com </dev/null 2>/dev/null | openssl x509 -noout -subject -issuer -dates -ext subjectAltName
+subject=CN = example.com
+issuer=[OCULTADO: CA privada do gateway de inspecao TLS do ambiente de laboratorio]
+notBefore=Nov 19 01:18:59 2026 GMT
+notAfter=Dec 19 01:19:59 2026 GMT
+X509v3 Subject Alternative Name: 
+    DNS:example.com
+
+lab$ openssl s_client -connect example.com:443 -servername example.com </dev/null 2>&1 | grep -E 'Verify return code|Protocol|Cipher'
+New, TLSv1.3, Cipher is TLS_AES_256_GCM_SHA384
+Verify return code: 0 (ok)
+### Fim: 19/11/2026 14:39:17 UTC
+
+### Verificacao cruzada (Certificate Transparency, crt.sh) - consulta em 19/11/2026 14:40 UTC
+lab$ curl -s 'https://crt.sh/?q=example.com&output=json&exclude=expired'  # resumo: certificados publicos validos para CN=example.com
+  valido de 2026-09-26 a 2026-12-25 | emissor: C=US, O=SSL Corporation, CN=Cloudflare TLS Issuing ECC CA 3
+  valido de 2026-09-24 a 2026-12-21 | emissor: C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV E36
+  valido de 2026-09-17 a 2026-12-13 | emissor: C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA DV R36
+  valido de 2025-12-02 a 2026-12-02 | emissor: C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA OV R36
+  valido de 2025-11-21 a 2026-11-21 | emissor: C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA OV R36
+  valido de 2025-11-20 a 2026-11-20 | emissor: C=GB, O=Sectigo Limited, CN=Sectigo Public Server Authentication CA OV R36

@@ -1,0 +1,85 @@
+### Pratica 5.2 - Verificacao e sanitizacao de metadados
+### Inicio: 19/11/2026 14:39:06 UTC | 11:39:06 BRT
+### ExifTool versao: 12.76
+### Preparacao declarada: imagem gerada por script (Pillow) e metadados FICTICIOS gravados com exiftool para simular foto de celular.
+
+lab$ sha256sum imagem_teste.jpg
+c778b03598eac861bcf75c35a0de7d58274ce7821741372d48ab1fa4c7694860  imagem_teste.jpg
+lab$ exiftool imagem_teste.jpg
+ExifTool Version Number         : 12.76
+File Name                       : imagem_teste.jpg
+Directory                       : .
+File Size                       : 65 kB
+File Modification Date/Time     : 2026:11:19 14:38:44+00:00
+File Access Date/Time           : 2026:11:19 14:38:44+00:00
+File Inode Change Date/Time     : 2026:11:19 14:38:44+00:00
+File Permissions                : -rw-r--r--
+File Type                       : JPEG
+File Type Extension             : jpg
+MIME Type                       : image/jpeg
+JFIF Version                    : 1.01
+Exif Byte Order                 : Big-endian (Motorola, MM)
+Make                            : FabricanteFicticio
+Camera Model Name               : Celular-Teste X1
+X Resolution                    : 1
+Y Resolution                    : 1
+Resolution Unit                 : None
+Software                        : CameraApp 1.0 (ficticio)
+Artist                          : Nome Ficticio da Silva
+Y Cb Cr Positioning             : Centered
+Exif Version                    : 0232
+Date/Time Original              : 2026:11:16 08:05:12
+Create Date                     : 2026:11:16 08:05:12
+Components Configuration        : Y, Cb, Cr, -
+Flashpix Version                : 0100
+Color Space                     : Uncalibrated
+Serial Number                   : SN-FICTICIO-0001
+GPS Version ID                  : 2.3.0.0
+GPS Latitude Ref                : South
+GPS Longitude Ref               : West
+GPS Altitude                    : 1100 m
+Image Width                     : 1200
+Image Height                    : 800
+Encoding Process                : Baseline DCT, Huffman coding
+Bits Per Sample                 : 8
+Color Components                : 3
+Y Cb Cr Sub Sampling            : YCbCr4:2:0 (2 2)
+Image Size                      : 1200x800
+Megapixels                      : 0.960
+GPS Latitude                    : 15 deg 47' 59.28" S
+GPS Longitude                   : 47 deg 51' 52.20" W
+GPS Position                    : 15 deg 47' 59.28" S, 47 deg 51' 52.20" W
+
+lab$ exiftool -all= -o imagem_publica.jpg imagem_teste.jpg
+    1 image files created
+
+lab$ exiftool imagem_publica.jpg
+ExifTool Version Number         : 12.76
+File Name                       : imagem_publica.jpg
+Directory                       : .
+File Size                       : 64 kB
+File Modification Date/Time     : 2026:11:19 14:39:07+00:00
+File Access Date/Time           : 2026:11:19 14:39:07+00:00
+File Inode Change Date/Time     : 2026:11:19 14:39:07+00:00
+File Permissions                : -rw-r--r--
+File Type                       : JPEG
+File Type Extension             : jpg
+MIME Type                       : image/jpeg
+Image Width                     : 1200
+Image Height                    : 800
+Encoding Process                : Baseline DCT, Huffman coding
+Bits Per Sample                 : 8
+Color Components                : 3
+Y Cb Cr Sub Sampling            : YCbCr4:2:0 (2 2)
+Image Size                      : 1200x800
+Megapixels                      : 0.960
+
+lab$ exiftool -gps:all -Make -Model -Artist -SerialNumber -DateTimeOriginal imagem_publica.jpg
+(saida vazia = campos removidos)
+lab$ sha256sum imagem_teste.jpg imagem_publica.jpg
+c778b03598eac861bcf75c35a0de7d58274ce7821741372d48ab1fa4c7694860  imagem_teste.jpg
+250eac6f8d9a6afeb10d21a2fd5fb25272b33154e5c7cde1984b36a58cbbc6e5  imagem_publica.jpg
+lab$ stat -c '%s bytes  %n' imagem_teste.jpg imagem_publica.jpg
+64742 bytes  imagem_teste.jpg
+64194 bytes  imagem_publica.jpg
+### Fim: 19/11/2026 14:39:07 UTC
